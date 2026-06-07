@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "insta-follow-checker"
+version = "1.0.0"
+description = "Analyse an Instagram data export to find non-mutual follows."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+dependencies = []
+
+[project.scripts]
+insta-follow-checker = "main:main"
+
+[tool.setuptools]
+py-modules = ["main"]
