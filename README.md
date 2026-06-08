@@ -115,6 +115,20 @@ insta-follow-checker
 Logging: set `LOG_LEVEL` (e.g. `DEBUG`) and `LOG_FILE` to also write logs to a file.
 
 
+## Get the Code
+
+Clone with git:
+
+```bash
+git clone https://github.com/drew-codes-things/InstaFollowTrack.git
+```
+
+Or with the [GitHub CLI](https://cli.github.com/):
+
+```bash
+gh repo clone drew-codes-things/InstaFollowTrack
+```
+
 ## License
 
 MIT - made by [Drew](https://github.com/drew-codes-things)

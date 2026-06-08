@@ -93,13 +93,13 @@ def extract_users(payload):
                 timestamp = None
                 for entry in sld:
                     if isinstance(entry, dict):
-                        if entry.get("value", "").strip():
-                            username = entry["value"].strip()
+                        if (entry.get("value") or "").strip():
+                            username = (entry.get("value") or "").strip()
                             timestamp = entry.get("timestamp")
                             break
 
                 if not username:
-                    title = node.get("title", "").strip()
+                    title = (node.get("title") or "").strip()
                     if title:
                         username = title
                         for entry in sld:
