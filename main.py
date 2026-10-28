@@ -3,6 +3,7 @@ import csv
 import glob
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 
@@ -34,14 +35,20 @@ def col(text, code):
     return f"{code}{text}{RESET}" if USE_COLOR else text
 
 
+NOT_ACCOUNT_LISTS = ("following_hashtags",)
+
+PROFILE_HREF_RE = re.compile(r"instagram\.com/(?:_u/)?([A-Za-z0-9._]+)/?$")
+
+
 def find_file(folder, candidates):
     for pattern in candidates:
-        direct_matches = glob.glob(os.path.join(folder, pattern))
-        if direct_matches:
-            return direct_matches[0]
-        recursive_matches = glob.glob(os.path.join(folder, "**", pattern), recursive=True)
-        if recursive_matches:
-            return recursive_matches[0]
+        for search in (os.path.join(folder, pattern), os.path.join(folder, "**", pattern)):
+            matches = sorted(
+                path for path in glob.glob(search, recursive=True)
+                if not os.path.basename(path).startswith(NOT_ACCOUNT_LISTS)
+            )
+            if matches:
+                return matches[0]
     return None
 
 
@@ -53,7 +60,6 @@ def find_all_followers_files(folder):
 
 
 def find_html_exports(folder):
-    """Detect an HTML-format export so we can tell the user to re-request JSON."""
     matches = []
     for pattern in ("following*.html", "followers*.html"):
         matches += glob.glob(os.path.join(folder, pattern))
@@ -69,17 +75,6 @@ HTML_EXPORT_MSG = (
 
 
 def extract_users(payload):
-    """
-    Walk the entire JSON structure and collect usernames + timestamps.
-
-    Handles two known Instagram export formats:
-      Format A (older): username is in string_list_data[].value
-        {"string_list_data": [{"value": "alice", "timestamp": 123}]}
-
-      Format B (newer): username is in the parent dict's "title" key,
-        string_list_data only has href + timestamp (no value)
-        {"title": "alice", "string_list_data": [{"href": "...", "timestamp": 123}]}
-    """
     users = {}
 
     def walk(node):
@@ -106,6 +101,14 @@ def extract_users(payload):
                             if isinstance(entry, dict) and entry.get("timestamp"):
                                 timestamp = entry["timestamp"]
                                 break
+
+                if not username:
+                    for entry in sld:
+                        match = PROFILE_HREF_RE.search((entry.get("href") or "") if isinstance(entry, dict) else "")
+                        if match:
+                            username = match.group(1)
+                            timestamp = entry.get("timestamp")
+                            break
 
                 if username:
                     users[username.lower()] = {
