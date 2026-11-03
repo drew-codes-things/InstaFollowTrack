@@ -151,6 +151,20 @@ def load_followers(folder):
     return merged
 
 
+def diff_followers(old_followers, new_followers):
+    lost = {k: v for k, v in old_followers.items() if k not in new_followers}
+    gained = {k: v for k, v in new_followers.items() if k not in old_followers}
+    return lost, gained
+
+
+def load_older_followers(old_folder):
+    if not os.path.isdir(old_folder):
+        raise FileNotFoundError(f"Older export folder not found: {old_folder}")
+    if not find_all_followers_files(old_folder):
+        raise FileNotFoundError(f"No followers_*.json files in the older export: {old_folder}")
+    return load_followers(old_folder)
+
+
 def format_ts(ts):
     if not ts:
         return ""
@@ -245,6 +259,21 @@ def write_csv(path, usernames_dict):
             })
 
 
+def report_changes(folder, old_folder, followers):
+    try:
+        old_followers = load_older_followers(old_folder)
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logger.error(f"Could not compare with the older export: {e}")
+        sys.exit(1)
+    lost, gained = diff_followers(old_followers, followers)
+    print(f"\nCompared with the older export in: {old_folder}")
+    print_section("Unfollowed you since the older export", lost, color=RED)
+    print_section("New followers since the older export", gained, show_date=True, color=GREEN)
+    write_txt(os.path.join(folder, "unfollowed_you.txt"), "Unfollowed you since the older export", lost)
+    write_txt(os.path.join(folder, "new_followers.txt"), "New followers since the older export", gained, show_date=True)
+    return ["unfollowed_you.txt", "new_followers.txt"]
+
+
 def parse_args():
     p = argparse.ArgumentParser(
         description="Analyse Instagram follower/following JSON exports."
@@ -257,6 +286,12 @@ def parse_args():
             "Path to the folder containing followers/following export files "
             "(defaults to the current working directory)"
         ),
+    )
+    p.add_argument(
+        "--compare",
+        metavar="OLD_DIR",
+        default=None,
+        help="Folder of an older export; lists who unfollowed you and who followed you since then",
     )
     p.add_argument(
         "--no-color",
@@ -377,6 +412,9 @@ def main():
         not_following_back,
     )
     saved.append("not_following_back.csv")
+
+    if args.compare:
+        saved += report_changes(folder, args.compare, followers)
 
     print(f"\n  Saved to {folder}/")
     for name in saved:

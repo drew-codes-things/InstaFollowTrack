@@ -26,6 +26,8 @@ InstaFollowChecker reads the JSON files from an official Instagram data export a
 | `mutual.txt` | All mutual follows |
 | `report.txt` | Combined report with all three sections and a summary table |
 | `not_following_back.csv` | CSV of non-reciprocal follows: `username`, `followed_since`, `profile_url` |
+| `unfollowed_you.txt` | With `--compare`: followers in the older export who are gone from this one |
+| `new_followers.txt` | With `--compare`: followers who are new since the older export, with the date they followed |
 
 All files are written to the same folder as the input data.
 
@@ -43,12 +45,13 @@ All files are written to the same folder as the input data.
 ## Usage
 
 ```bash
-python main.py [data_dir] [--no-color]
+python main.py [data_dir] [--compare OLD_DIR] [--no-color]
 ```
 
 | Argument | Description |
 |---|---|
 | `data_dir` | Path to the folder containing your export files. Defaults to the current working directory if omitted. |
+| `--compare OLD_DIR` | Folder of an older export. Lists who unfollowed you and who followed you between the two exports. |
 | `--no-color` | Disable ANSI colour in terminal output. |
 
 ### Example
@@ -62,6 +65,21 @@ Or if you run it from the folder containing the JSON files:
 ```bash
 cd ~/Downloads/instagram-export/
 python /path/to/main.py
+```
+
+### Who unfollowed me?
+
+Keep each export in its own folder, then compare the newest with an older one:
+
+```bash
+python main.py ~/instagram/2026-06 --compare ~/instagram/2026-03
+```
+
+### Tests
+
+```bash
+pip install pytest
+python -m pytest tests
 ```
 
 ---
