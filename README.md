@@ -9,6 +9,8 @@
 
 </div>
 
+![InstaFollowTrack comparing two exports](screenshot.png)
+
 ---
 
 ## Overview
