@@ -280,7 +280,7 @@ def write_csv(path, usernames_dict):
 def report_changes(folder, old_folder, followers):
     try:
         old_followers = load_older_followers(old_folder)
-    except (FileNotFoundError, json.JSONDecodeError, MixedExportsError) as e:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, MixedExportsError) as e:
         logger.error(f"Could not compare with the older export: {e}")
         sys.exit(1)
     lost, gained = diff_followers(old_followers, followers)
@@ -365,6 +365,9 @@ def main():
         logger.error(f"Error parsing JSON: {e}")
         if find_html_exports(folder):
             print(HTML_EXPORT_MSG)
+        sys.exit(1)
+    except (UnicodeDecodeError, OSError) as e:
+        logger.error(f"Could not read the export files (expected UTF-8 JSON from Instagram): {e}")
         sys.exit(1)
 
     if not following:
