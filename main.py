@@ -52,11 +52,29 @@ def find_file(folder, candidates):
     return None
 
 
+FOLLOWING_FILE_PATTERNS = ["following.json", "following_*.json", "following*.json"]
+
+
+class MixedExportsError(ValueError):
+    pass
+
+
 def find_all_followers_files(folder):
     direct = glob.glob(os.path.join(folder, "followers_*.json"))
     recursive = glob.glob(os.path.join(folder, "**", "followers_*.json"), recursive=True)
     matches = sorted(set(direct + recursive))
+    export_folders = sorted({os.path.dirname(path) for path in matches})
+    if len(export_folders) > 1:
+        raise MixedExportsError(
+            "followers files were found in more than one export folder, so the lists would be mixed: "
+            f"{', '.join(export_folders)}. Point the tool at a single export folder."
+        )
     return matches
+
+
+def find_following_file(folder, followers_files):
+    search_folder = os.path.dirname(followers_files[0]) if followers_files else folder
+    return find_file(search_folder, FOLLOWING_FILE_PATTERNS)
 
 
 def find_html_exports(folder):
@@ -262,7 +280,7 @@ def write_csv(path, usernames_dict):
 def report_changes(folder, old_folder, followers):
     try:
         old_followers = load_older_followers(old_folder)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
+    except (FileNotFoundError, json.JSONDecodeError, MixedExportsError) as e:
         logger.error(f"Could not compare with the older export: {e}")
         sys.exit(1)
     lost, gained = diff_followers(old_followers, followers)
@@ -319,8 +337,12 @@ def main():
         logger.error(f"Folder not found: {folder}")
         sys.exit(1)
 
-    followers_files = find_all_followers_files(folder)
-    following_path = find_file(folder, ["following.json", "following_*.json", "following*.json"])
+    try:
+        followers_files = find_all_followers_files(folder)
+    except MixedExportsError as e:
+        logger.error(str(e))
+        sys.exit(1)
+    following_path = find_following_file(folder, followers_files)
 
     if not followers_files or not following_path:
         if find_html_exports(folder):
