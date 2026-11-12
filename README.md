@@ -47,7 +47,7 @@ All files are written to the same folder as the input data.
 ## Usage
 
 ```bash
-python main.py [data_dir] [--compare OLD_DIR] [--no-color]
+python main.py [data_dir] [--compare OLD_DIR] [--no-color] [--debug]
 ```
 
 | Argument | Description |
@@ -55,6 +55,7 @@ python main.py [data_dir] [--compare OLD_DIR] [--no-color]
 | `data_dir` | Path to the folder containing your export files. Defaults to the current working directory if omitted. |
 | `--compare OLD_DIR` | Folder of an older export. Lists who unfollowed you and who followed you between the two exports. |
 | `--no-color` | Disable ANSI colour in terminal output. |
+| `--debug` | If the following list comes out empty, print the first 300 characters of the raw `following.json` (this contains your follow data). |
 
 ### Example
 
@@ -107,7 +108,7 @@ The tool handles both known Instagram export formats automatically:
 - **Format A (older exports):** username stored in `string_list_data[].value`
 - **Format B (newer exports):** username stored in the parent `title` key; `string_list_data` contains only `href` and `timestamp`
 
-Multiple `followers_*.json` files are detected and merged automatically.
+Multiple `followers_*.json` files in one export folder are detected and merged automatically. If the folder you give holds more than one export (for example `2026-03/` and `2026-06/`), the tool stops and lists them; point it at one export and use `--compare` for the other.
 
 If the tool finds an **HTML** export instead of JSON (`following.html` / `followers_*.html`), it stops with a clear message telling you to re-request your data in JSON format.
 
@@ -116,7 +117,7 @@ If the tool finds an **HTML** export instead of JSON (`following.html` / `follow
 ## Notes
 
 - Usernames are compared case-insensitively. `Alice` and `alice` are treated as the same account.
-- If the tool finds the following list is empty after parsing, it prints a debug snippet of the raw JSON to help diagnose the format and exits with a clear error message.
+- If the tool finds the following list is empty after parsing, it exits with a clear error message; run it again with `--debug` to also print a snippet of the raw JSON to help diagnose the format.
 - The `followed_since` date in the CSV and TXT files is derived from the Unix timestamp in the export; it reflects when the follow was recorded by Instagram, not necessarily the exact date it happened.
 
 ---
